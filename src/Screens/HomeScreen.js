@@ -163,7 +163,7 @@ export default function HomeScreen() {
                             <Image source={require('../assets/images/mic.png')} style={{ width: hp(8), height: hp(8) }} />
                         </TouchableOpacity>
                     )}
-
+                    
                     {messages.length > 0 && (
                         <TouchableOpacity onPress={clear} style={{ backgroundColor: '#6B7280', borderRadius: 20, padding: 10, position: 'absolute', right: 10 }}>
                             <Text style={{ color: 'white', fontWeight: 'bold' }}>Clear</Text>

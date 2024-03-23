@@ -1,8 +1,12 @@
 import { View, Text } from 'react-native'
-import React from 'react'
+import React, { useEffect } from 'react'
 import AppNavigation from './src/Navigation/AppNavigation'
+import { apiCall } from './src/Api/openAI'
 
 export default function App() {
+  useEffect(()=>{
+    // apiCall('What is quantum computing?')
+  },[])
   return (
     <AppNavigation />
   )

@@ -5,6 +5,7 @@ import Features from '../Components/Features';
 import { PermissionsAndroid, Platform } from 'react-native';
 import Voice from '@react-native-community/voice';
 import { apiCall } from '../Api/openAI';
+import { DummyMessage } from '../Constants/DummyMessages';
 
 async function requestRecordAudioPermission() {
     try {
@@ -31,8 +32,9 @@ async function requestRecordAudioPermission() {
 }
 
 export default function HomeScreen() {
-    const [messages, setMessages] = useState([]);
+    const [messages, setMessages] = useState(DummyMessage)
     const [recording, setRecording] = useState(false);
+    const [speaking, setSpeaking] = useState(false);
     const [result, setResult] = useState('');
     const ScrollViewRef = useRef();
     const [loading, setLoading] = useState(false);
@@ -64,7 +66,7 @@ export default function HomeScreen() {
             console.log(error);
         }
     }
-
+    // console.log(result);
     const stopRecording = async () => {
         try {
             await Voice.stop();
@@ -78,15 +80,16 @@ export default function HomeScreen() {
 
     const fetchResponse = () => {
         if (result.trim().length > 0) {
+            //add usermessages
             let newMessages = [...messages];
-            newMessages.push({ role: 'user', content: result.trim() });
-            setMessages(newMessages);
+            newMessages.push({ role: 'user', content: result.trim()});
+            setMessages([...newMessages]);
             updateScrollView();
             setLoading(true);
             apiCall(result.trim(), newMessages).then(res => {
                 setLoading(false);
                 if (res.success) {
-                    setMessages(res.data);
+                    setMessages([...res.data]);
                     updateScrollView();
                     setResult('');
                 } else {
@@ -106,6 +109,10 @@ export default function HomeScreen() {
         setMessages([]);
     }
 
+    const stopSpeaking = () => {
+        setSpeaking(false)
+    }
+
     useEffect(() => {
         Voice.onSpeechStart = speechStartHandler;
         Voice.onSpeechEnd = speechEndHandler;
@@ -118,29 +125,58 @@ export default function HomeScreen() {
         requestRecordAudioPermission();
     }, []);
 
+    console.log('result: ',result);
+
     return (
-        <View style={{ flex: 1, backgroundColor: 'white' }}>
-            <SafeAreaView style={{ flex: 1, marginHorizontal: wp(5), marginVertical: hp(3) }}>
+        <View className='flex-1 bg-white'>
+            <SafeAreaView className='flex-1 flex mx-5'>
                 {/* Bot icon */}
-                <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                <View className='flex-row justify-center'>
                     <Image source={require('../assets/images/bot.jpg')} style={{ height: hp(25), width: wp(55) }} />
                 </View>
 
                 {/* Features or messages */}
                 {
                     messages.length > 0 ?
-                        <View style={{ flex: 1, marginTop: 10 }}>
-                            <Text style={{ fontSize: wp(5), color: '#4B5563', fontWeight: 'bold', marginLeft: wp(1) }}>Assistant</Text>
-                            <View style={{ height: hp(50), backgroundColor: '#D1D5DB', borderRadius: 20, padding: 10 }}>
-                                <ScrollView ref={ScrollViewRef} bounces={false} style={{ flex: 1 }}>
+                        <View className='space-y-2 flex-1'>
+                            <Text style={{ fontSize: wp(5) }} className='text-gray-700 font-semibold ml-1'>Assistant</Text>
+                            <View style={{ height: hp(58) }} className='bg-neutral-200 rounded-3xl p-4'>
+                                <ScrollView ref={ScrollViewRef} bounces={false} showsVerticalScrollIndicator={false} className='space-y-2'>
                                     {
-                                        messages.map((msg, index) => (
-                                            <View key={index} style={{ flexDirection: msg.role === 'assistant' ? 'row-reverse' : 'row' }}>
-                                                <View style={{ maxWidth: wp(70), backgroundColor: msg.role === 'assistant' ? '#D1FAE5' : 'white', borderRadius: 10, padding: 10, marginVertical: 5 }}>
-                                                    <Text style={{ color: '#000' }}>{msg.content}</Text>
-                                                </View>
-                                            </View>
-                                        ))
+                                        messages.map((message, index) => {
+                                            if (message.role == 'assistant') {
+                                                if (message.content.includes('https')) {
+                                                    return (
+                                                        <View key={index} className='flex-row justify-start'>
+                                                            <View className='p-2 rounded-2xl bg-emerald-100 rounded-tl-none'>
+                                                                <Image
+                                                                    source={{ uri: message.content }}
+                                                                    style={{ height: wp(60), width: wp(60) }}
+                                                                    className='rounded-2xl'
+                                                                    resizeMode='contain'
+                                                                />
+                                                            </View>
+                                                        </View>
+                                                    )
+                                                } else {
+                                                    return (
+                                                        <View key={index} className='flex-row justify-start'>
+                                                            <View style={{ fontSize: wp(70) }} className='bg-emerald-100 rounded-xl p-2 rounded-tl-none'>
+                                                                <Text className='text-black'>{message.content}</Text>
+                                                            </View>
+                                                        </View>
+                                                    )
+                                                }
+                                            } else {
+                                                return (
+                                                    <View key={index} className='flex-row justify-end'>
+                                                        <View style={{ fontSize: wp(70) }} className='bg-white rounded-xl p-2 rounded-tr-none'>
+                                                            <Text className='text-black'>{message.content}</Text>
+                                                        </View>
+                                                    </View>
+                                                )
+                                            }
+                                        })
                                     }
                                 </ScrollView>
                             </View>
@@ -156,17 +192,22 @@ export default function HomeScreen() {
                         <ActivityIndicator size="small" color="#000" style={{ marginRight: 10 }} />
                     ) : recording ? (
                         <TouchableOpacity onPress={stopRecording} style={{ padding: 10 }}>
-                            <Image source={require('../assets/images/voice.png')} style={{ width: hp(8), height: hp(8) }} />
+                            <Image source={require('../assets/images/voice.png')} style={{ width: hp(8), height: hp(8) }} className='rounded-full' />
                         </TouchableOpacity>
                     ) : (
                         <TouchableOpacity onPress={startRecording} style={{ padding: 10 }}>
-                            <Image source={require('../assets/images/mic.png')} style={{ width: hp(8), height: hp(8) }} />
+                            <Image source={require('../assets/images/mic.png')} style={{ width: hp(8), height: hp(8) }} className='rounded-full' />
                         </TouchableOpacity>
                     )}
-                    
+
                     {messages.length > 0 && (
-                        <TouchableOpacity onPress={clear} style={{ backgroundColor: '#6B7280', borderRadius: 20, padding: 10, position: 'absolute', right: 10 }}>
+                        <TouchableOpacity onPress={clear} className='bg-neutral-400 rounded-3xl p-2 absolute right-10'>
                             <Text style={{ color: 'white', fontWeight: 'bold' }}>Clear</Text>
+                        </TouchableOpacity>
+                    )}
+                    {speaking && (
+                        <TouchableOpacity onPress={stop} className='bg-red-400 rounded-3xl p-2 absolute left-10'>
+                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Stop</Text>
                         </TouchableOpacity>
                     )}
                 </View>

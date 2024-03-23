@@ -60,7 +60,7 @@ const dalleEndCall = async (prompt, messages) => {
         })
         let url = res?.data?.data[0]?.url;
         console.log('got url:', url);
-        messages.push({ role: 'assistant', content: url.trim() });
+        messages.push({ role: 'assistant', content: url});
         return Promise.resolve({ success: true, data: messages });
     } catch (error) {
         console.log("error", error);

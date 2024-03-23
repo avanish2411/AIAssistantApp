@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-
-
-=======
->>>>>>> e5e32b5fc689e3eb7f00b05e195be749d190a932
 export const DummyMessage = [
     {
         role :'user',
